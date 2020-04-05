@@ -35,8 +35,9 @@ def getArticleURLS():
     
     hrefs = []
     for link in links:
-        if link != None:
-            hrefs.append(link.get_attribute('href'))
+        hyperlink = link.get_attribute('href')
+        if hyperlink != None:
+            hrefs.append(hyperlink)
 
     # FIXME: get each article up to 100, 1000, etc. using xpaths (like above)
 
