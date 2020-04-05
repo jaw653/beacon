@@ -8,6 +8,7 @@ Beacon - A shining light in the storm
 import time
 from pprint import pprint       # FIXME: just for testing purposes
 import requests
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
@@ -34,7 +35,8 @@ def getArticleURLS():
     
     hrefs = []
     for link in links:
-        hrefs.append(link.get_attribute('href'))
+        if link != None:
+            hrefs.append(link.get_attribute('href'))
 
     # FIXME: get each article up to 100, 1000, etc. using xpaths (like above)
 
@@ -43,11 +45,18 @@ def getArticleURLS():
     return hrefs
 
 
-def getArticleText():
-    pass
+def getArticleText(url):
+    res = requests.get(url)
+    html = res.content
+
+    soup = BeautifulSoup(html, 'html.parser')
+
+    text = soup.find_all(text=True)
+
+    return text
 
 
-def trimArticles(articles):
+def filterArticles(articles):
     '''
     Removes negative or indifferent articles from the list
 
@@ -61,8 +70,8 @@ def trimArticles(articles):
 
 if __name__ == '__main__':
     urls = getArticleURLS()
-    pprint(urls)
-    # refinedList = trimArticles(articles)
+    print(urls[0])
+    # filteredList = filterArticles(articles)
 
     # Get a bunch of articles from the internet about coronavirus
     # Iterate over each article, classifying it as good or bad
