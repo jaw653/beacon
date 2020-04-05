@@ -36,7 +36,8 @@ def getArticleURLS():
     hrefs = []
     for link in links:
         hyperlink = link.get_attribute('href')
-        if hyperlink != None:
+        # if hyperlink includes the word "google", dont add it
+        if hyperlink != None and 'google' not in hyperlink:
             hrefs.append(hyperlink)
 
     # FIXME: get each article up to 100, 1000, etc. using xpaths (like above)
@@ -52,7 +53,7 @@ def getArticleText(url):
 
     soup = BeautifulSoup(html, 'html.parser')
 
-    text = soup.find_all(text=True)
+    text = soup.find_all('p')
 
     return text
 
@@ -71,7 +72,9 @@ def filterArticles(articles):
 
 if __name__ == '__main__':
     urls = getArticleURLS()
-    print(urls[0])
+    pprint(urls)
+
+    # FIXME: be sure to start looking at url index 5 - its predecessors are just google links
     # filteredList = filterArticles(articles)
 
     # Get a bunch of articles from the internet about coronavirus
