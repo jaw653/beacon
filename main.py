@@ -6,6 +6,8 @@ Beacon - A shining light in the storm
 """
 
 import time
+from pprint import pprint       # FIXME: just for testing purposes
+import requests
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
@@ -34,9 +36,15 @@ def getArticleURLS():
     for link in links:
         hrefs.append(link.get_attribute('href'))
 
+    # FIXME: get each article up to 100, 1000, etc. using xpaths (like above)
 
-    # driver is now on page with list of articles
-    # get each article up to 100, 1000, etc. using xpaths (like above)
+    driver.close()
+
+    return hrefs
+
+
+def getArticleText():
+    pass
 
 
 def trimArticles(articles):
@@ -52,9 +60,9 @@ def trimArticles(articles):
 
 
 if __name__ == '__main__':
-    articles = getArticleURLS()
-    refinedList = trimArticles(articles)
-    print('hello, world!')
+    urls = getArticleURLS()
+    pprint(urls)
+    # refinedList = trimArticles(articles)
 
     # Get a bunch of articles from the internet about coronavirus
     # Iterate over each article, classifying it as good or bad
