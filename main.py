@@ -5,10 +5,12 @@ Date: 04/02/2020
 Beacon - A shining light in the storm
 """
 
+from newspaper import Article
 import time
 from pprint import pprint       # FIXME: just for testing purposes
 import requests
-from selenium import webdriver
+from bs4 import BeautifulSoup
+from selenium import webdriver  # FIXME: does Google have an API I can use instead of Selenium
 from selenium.webdriver.common.keys import Keys
 
 def getArticleURLS():
@@ -34,20 +36,35 @@ def getArticleURLS():
     
     hrefs = []
     for link in links:
-        hrefs.append(link.get_attribute('href'))
+        hyperlink = link.get_attribute('href')
+        if hyperlink != None and 'google' not in hyperlink:
+            hrefs.append(hyperlink)
 
-    # FIXME: get each article up to 100, 1000, etc. using xpaths (like above)
+    # FIXME: get more articles than are just on the first page
 
     driver.close()
 
     return hrefs
 
 
-def getArticleText():
-    pass
+def getArticleText(url):
+    '''
+    Gets the text of a given article
+    
+    Keyword Arguments:
+    url -- The URL for the article to parse
+
+    return -- Text of the article at the given url
+    '''
+    article = Article(url)
+
+    article.download()
+    article.parse()
+
+    return article.text
 
 
-def trimArticles(articles):
+def filterArticles(articles):
     '''
     Removes negative or indifferent articles from the list
 
@@ -61,8 +78,10 @@ def trimArticles(articles):
 
 if __name__ == '__main__':
     urls = getArticleURLS()
-    pprint(urls)
-    # refinedList = trimArticles(articles)
+    print(getArticleText(urls[0]))
+
+    # FIXME: be sure to start looking at url index 5 - its predecessors are just google links
+    # filteredList = filterArticles(articles)
 
     # Get a bunch of articles from the internet about coronavirus
     # Iterate over each article, classifying it as good or bad
