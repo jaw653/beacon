@@ -9,7 +9,7 @@ from newspaper import Article
 import time
 from pprint import pprint       # FIXME: just for testing purposes
 import requests
-from bs4 import BeautifulSoup
+from textblob import TextBlob   # for sentiment analysis
 from selenium import webdriver  # FIXME: does Google have an API I can use instead of Selenium
 from selenium.webdriver.common.keys import Keys
 
@@ -58,13 +58,35 @@ def getArticleText(url):
     '''
     article = Article(url)
 
-    article.download()
+    try:
+        article.download()
+    except:
+        pass
+
     article.parse()
 
     return article.text
 
 
-def filterArticles(articles):
+def getArticles(urls):
+    '''
+    Iterates over all of the articles and parses them
+
+    Saves the text of each article in a list of articles
+
+    Keyword Arguments:
+    urls -- The list of URLs pointing to articles
+
+    return -- List of text from each article
+    '''
+    articles = []
+    for url in urls:
+        articles.append(getArticleText(url))
+
+    return articles
+
+
+def filterArticles(urls):
     '''
     Removes negative or indifferent articles from the list
 
@@ -73,14 +95,33 @@ def filterArticles(articles):
 
     return -- refined list of articles with only positive documents
     '''
-    pass
+    articles = getArticles(urls)
+
+    index = 0
+    positiveArticleURLs = []
+    for article in articles:
+        # conduct sentiment analysis
+        # run machine learning algorithm on the polarity of the sentiment analysis as the classifying number
+        # if positive article, add to list of positives
+
+        blob = TextBlob(article)
+        print(blob.sentiment)
+        if blob.sentiment.polarity > 0:
+            positiveArticleURLs.append(urls[index])
+
+        index += 1
+
+    return positiveArticleURLs
 
 
 if __name__ == '__main__':
     urls = getArticleURLS()
-    print(getArticleText(urls[0]))
+    pprint(urls)
+    # urls = [urls[0], urls[3], urls[6], urls[9], urls[12]]
+    positiveArticles = filterArticles(urls)
 
-    # FIXME: be sure to start looking at url index 5 - its predecessors are just google links
+    pprint(positiveArticles)
+
     # filteredList = filterArticles(articles)
 
     # Get a bunch of articles from the internet about coronavirus
