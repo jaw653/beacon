@@ -5,7 +5,9 @@ Date: 04/02/2020
 Beacon - A shining light in the storm
 """
 
-from newspaper import Article
+from classes.Article import Article
+
+import newspaper
 import time
 from pprint import pprint       # FIXME: just for testing purposes
 import requests
@@ -47,16 +49,16 @@ def getArticleURLS():
     return hrefs
 
 
-def getArticleText(url):
+def getArticleInfo(url):
     '''
     Gets the text of a given article
     
     Keyword Arguments:
     url -- The URL for the article to parse
 
-    return -- Text of the article at the given url
+    return -- Article object w/ both title and text of article at url
     '''
-    article = Article(url)
+    article = newspaper.Article(url)
 
     try:
         article.download()
@@ -65,7 +67,7 @@ def getArticleText(url):
 
     article.parse()
 
-    return article.text
+    return Article(article.title, article.text)
 
 
 def getArticles(urls):
@@ -81,7 +83,7 @@ def getArticles(urls):
     '''
     articles = []
     for url in urls:
-        articles.append(getArticleText(url))
+        articles.append(getArticleInfo(url))
 
     return articles
 
@@ -103,10 +105,14 @@ def filterArticles(urls):
         # conduct sentiment analysis
         # run machine learning algorithm on the polarity of the sentiment analysis as the classifying number
         # if positive article, add to list of positives
+        title = article.getTitle()
+        text = article.getText()
 
-        blob = TextBlob(article)
-        print(blob.sentiment)
-        if blob.sentiment.polarity > 0:
+        blob0 = TextBlob(title)
+        blob1 = TextBlob(text)
+        print('title sentiment: ', blob0.sentiment.polarity)
+        print('text sentiment: ', blob1.sentiment.polarity)
+        if blob1.sentiment.polarity > 0:
             positiveArticleURLs.append(urls[index])
 
         index += 1
@@ -117,7 +123,7 @@ def filterArticles(urls):
 if __name__ == '__main__':
     urls = getArticleURLS()
     pprint(urls)
-    # urls = [urls[0], urls[3], urls[6], urls[9], urls[12]]
+    urls = [urls[0]]
     positiveArticles = filterArticles(urls)
 
     pprint(positiveArticles)
