@@ -15,7 +15,11 @@ from textblob import TextBlob   # for sentiment analysis
 from selenium import webdriver  # FIXME: does Google have an API I can use instead of Selenium
 from selenium.webdriver.common.keys import Keys
 
-def getArticleURLS():
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+
+def getArticleURLS(query):
     '''
     Gets list of good news article URLs about COVID-19
 
@@ -28,7 +32,7 @@ def getArticleURLS():
     driver.get('https://www.google.com')
 
     que = driver.find_element_by_xpath("//input[@name='q']")
-    que.send_keys('good positive news about coronavirus')
+    que.send_keys(query)
     que.send_keys(Keys.RETURN)
 
     # Wait for browser to get to new page before finding links
@@ -88,6 +92,56 @@ def getArticles(urls):
     return articles
 
 
+def extractNumbers(articleList, classificationList, c, dataset):
+    for article in articleList:
+        title = article.getTitle()
+        text = article.getText()
+
+        blob0 = TextBlob(title)
+        blob1 = TextBlob(text)
+
+        titlePol = blob0.sentiment.polarity
+        textPol = blob1.sentiment.polarity
+
+        dataset.append([titlePol, textPol])
+        classificationList.append(c)
+
+
+def trainModel():
+    '''
+    Aggregates test data via automated searches and trains model based on the data
+
+    return -- the model itself for prediction purposes
+    '''
+    positiveURLs = getArticleURLS('optimistc news about coronavirus')
+    negativeURLs = getArticleURLS('coronavirus news getting worse')
+
+    positiveArticles = getArticles(positiveURLs)
+    negativeArticles = getArticles(negativeURLs)
+
+    positiveDataset = []
+    negativeDataset = []
+    classification = []
+
+    extractNumbers(positiveArticles, classification, 0, positiveDataset)
+    extractNumbers(negativeArticles, classification, 1, negativeDataset)
+
+    # Join the datasets together to create the data which will be trained/tested on
+    dataset = positiveDataset.append(negativeDataset)
+
+    gnb = GaussianNB()
+
+    # Split the training and testing data
+    x_train, x_test, y_train, y_test = \
+        train_test_split(dataset, classification, test_size=0.5)
+
+    model = gnb.fit(x_train, y_train)
+
+    return model
+
+    
+
+
 def filterArticles(urls):
     '''
     Removes negative or indifferent articles from the list
@@ -112,6 +166,9 @@ def filterArticles(urls):
         blob1 = TextBlob(text)
         print('title sentiment: ', blob0.sentiment.polarity)
         print('text sentiment: ', blob1.sentiment.polarity)
+
+        currPair = [blob0.sentiment.polarity, blob1.sentiment.polarity]
+
         if blob1.sentiment.polarity > 0:
             positiveArticleURLs.append(urls[index])
 
@@ -121,12 +178,13 @@ def filterArticles(urls):
 
 
 if __name__ == '__main__':
-    urls = getArticleURLS()
+    model = trainModel()
+    '''urls = getArticleURLS('optimistic news about coronavirus')
     pprint(urls)
     urls = [urls[0]]
     positiveArticles = filterArticles(urls)
 
-    pprint(positiveArticles)
+    pprint(positiveArticles)'''
 
     # filteredList = filterArticles(articles)
 
