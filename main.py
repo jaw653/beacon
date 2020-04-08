@@ -107,12 +107,12 @@ def extractNumbers(articleList, classificationList, c, dataset):
         classificationList.append(c)
 
 
-def trainModel():
+def getData():
     '''
-    Aggregates test data via automated searches and trains model based on the data
+    Collects and aggregates data for train/test purposes
 
-    return -- the model itself for prediction purposes
-    '''
+    return -- the aggregate feature dataset and accompanying classifications
+    ''''
     positiveURLs = getArticleURLS('optimistc news about coronavirus')
     negativeURLs = getArticleURLS('coronavirus news getting worse')
 
@@ -129,17 +129,26 @@ def trainModel():
     # Join the datasets together to create the data which will be trained/tested on
     dataset = positiveDataset.append(negativeDataset)
 
+    return dataset, classification
+
+
+def trainModel():
+    '''
+    Trains model based on data
+
+    return -- the model itself for prediction purposes
+    '''
+    dataset, classification = getData()
+
     gnb = GaussianNB()
 
     # Split the training and testing data
     x_train, x_test, y_train, y_test = \
-        train_test_split(dataset, classification, test_size=0.5)
+        train_test_split(dataset, classification, test_size=0.5)        # FIXME: might want to try something besides 50/50 split
 
     model = gnb.fit(x_train, y_train)
 
     return model
-
-    
 
 
 def filterArticles(urls):
