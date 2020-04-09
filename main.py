@@ -69,6 +69,7 @@ def getArticleInfo(url):
     except:
         pass
 
+    print('PARSING ARTICLE')
     article.parse()
 
     return Article(article.title, article.text)
@@ -92,10 +93,19 @@ def getArticles(urls):
     return articles
 
 
-def extractNumbers(articleList, classificationList, c, dataset):
+def extractNumbers(articleList, classificationList, c):
+    '''
+    Conducts sentiment analysis on each article in the given article list
+    '''
+    i = 0
+    dataset = []
     for article in articleList:
+        print('Conducting SA on article ', i)
+
         title = article.getTitle()
         text = article.getText()
+
+        i = i + 1
 
         blob0 = TextBlob(title)
         blob1 = TextBlob(text)
@@ -105,6 +115,10 @@ def extractNumbers(articleList, classificationList, c, dataset):
 
         dataset.append([titlePol, textPol])
         classificationList.append(c)
+        print('dataset is now:')
+        print(dataset)
+
+    return dataset
 
 
 def getData():
@@ -112,22 +126,28 @@ def getData():
     Collects and aggregates data for train/test purposes
 
     return -- the aggregate feature dataset and accompanying classifications
-    ''''
+    '''
+    print('GETTING DATA...')
     positiveURLs = getArticleURLS('optimistc news about coronavirus')
     negativeURLs = getArticleURLS('coronavirus news getting worse')
 
     positiveArticles = getArticles(positiveURLs)
     negativeArticles = getArticles(negativeURLs)
 
-    positiveDataset = []
-    negativeDataset = []
     classification = []
 
-    extractNumbers(positiveArticles, classification, 0, positiveDataset)
-    extractNumbers(negativeArticles, classification, 1, negativeDataset)
+    positiveDataset = extractNumbers(positiveArticles, classification, 0)
+    negativeDataset = extractNumbers(negativeArticles, classification, 1)
 
     # Join the datasets together to create the data which will be trained/tested on
     dataset = positiveDataset.append(negativeDataset)
+
+    print('DATA COLLECTED.')
+    print('dataset is: ')
+    print(dataset)
+    
+    print('classification set is: ')
+    print(classification)
 
     return dataset, classification
 
@@ -139,8 +159,14 @@ def trainModel():
     return -- the model itself for prediction purposes
     '''
     dataset, classification = getData()
+    print('in function dataset: ')
+    print(dataset)
+    print('in function classification set: ')
+    print(classification)
 
     gnb = GaussianNB()
+
+    print('TRAINING MODEL...')
 
     # Split the training and testing data
     x_train, x_test, y_train, y_test = \
@@ -148,8 +174,20 @@ def trainModel():
 
     model = gnb.fit(x_train, y_train)
 
-    return model
+    print('MODEL TRAINED.')
+    return model, x_test, y_test
 
+
+def testModel(model, x_test, y_test):
+    '''
+    Tests model accuracy; for testing purposes only
+    '''
+    print('TESTING MODEL...')
+    y_predict = model.predict(x_test)
+    print('predicted:')
+    print(y_predict)
+
+    print((y_test != y_predict).sum())
 
 def filterArticles(urls):
     '''
@@ -187,7 +225,8 @@ def filterArticles(urls):
 
 
 if __name__ == '__main__':
-    model = trainModel()
+    model, x_test, y_test = trainModel()
+    testModel(model, x_test, y_test)
     '''urls = getArticleURLS('optimistic news about coronavirus')
     pprint(urls)
     urls = [urls[0]]
