@@ -9,6 +9,7 @@ from classes.Article import Article
 
 import newspaper
 import time
+import os
 from pprint import pprint       # FIXME: just for testing purposes
 import requests
 from textblob import TextBlob   # for sentiment analysis
@@ -121,7 +122,7 @@ def extractNumbers(articleList, classificationList, c):
     return dataset
 
 
-def getData():
+def scrapeData():
     '''
     Collects and aggregates data for train/test purposes
 
@@ -147,12 +148,9 @@ def getData():
     # Join the datasets together to create the data which will be trained/tested on
     dataset = positiveDataset + negativeDataset
 
-    '''print('DATA COLLECTED.')
-    print('dataset is: ')
-    print(dataset)
-    
-    print('classification set is: ')
-    print(classification)'''
+    with open('data.txt', 'w') as fp:
+        for item in dataset:
+            fp.write('%s\n' % item)
 
     return dataset, classification
 
@@ -163,11 +161,12 @@ def trainModel():
 
     return -- the model itself for prediction purposes
     '''
-    dataset, classification = getData()
-    print('in function dataset: ')
-    print(dataset)
-    print('in function classification set: ')
-    print(classification)
+    fileSize = os.path.getsize('data.txt')
+
+    if fileSize == 0:
+        dataset, classification = scrapeData()
+    else:
+        pass
 
     gnb = GaussianNB()
 
@@ -175,7 +174,7 @@ def trainModel():
 
     # Split the training and testing data
     x_train, x_test, y_train, y_test = \
-        train_test_split(dataset, classification, test_size=0.5)        # FIXME: might want to try something besides 50/50 split
+        train_test_split(dataset, classification, test_size=0.7)        # FIXME: might want to try something besides 50/50 split
 
     model = gnb.fit(x_train, y_train)
 
@@ -192,7 +191,11 @@ def testModel(model, x_test, y_test):
     print('predicted:')
     print(y_predict)
 
-    print((y_test != y_predict).sum())
+    print('y_test is:')
+    print(y_test)
+    print('y_predict is:')
+    print(y_predict)
+
 
 
 def filterArticles(urls):
