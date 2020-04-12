@@ -64,15 +64,15 @@ def getArticleInfo(url):
     '''
     article = newspaper.Article(url)
 
-    try:
+    if requests.get(url).text != None:      # Litmus test to see if forbidden from scraping site
         article.download()
-    except:
-        pass
 
-    print('PARSING ARTICLE')
-    article.parse()
+        print('PARSING ARTICLE')
+        article.parse()
 
-    return Article(article.title, article.text)
+        return Article(article.title, article.text)
+    else:
+        return None
 
 
 def getArticles(urls):
@@ -139,15 +139,20 @@ def getData():
     positiveDataset = extractNumbers(positiveArticles, classification, 0)
     negativeDataset = extractNumbers(negativeArticles, classification, 1)
 
-    # Join the datasets together to create the data which will be trained/tested on
-    dataset = positiveDataset.append(negativeDataset)
+    '''print('positive dataset is:')
+    print(positiveDataset)
+    print('negativeDataset is: ')
+    print(negativeDataset)'''
 
-    print('DATA COLLECTED.')
+    # Join the datasets together to create the data which will be trained/tested on
+    dataset = positiveDataset + negativeDataset
+
+    '''print('DATA COLLECTED.')
     print('dataset is: ')
     print(dataset)
     
     print('classification set is: ')
-    print(classification)
+    print(classification)'''
 
     return dataset, classification
 
@@ -189,6 +194,7 @@ def testModel(model, x_test, y_test):
 
     print((y_test != y_predict).sum())
 
+
 def filterArticles(urls):
     '''
     Removes negative or indifferent articles from the list
@@ -227,6 +233,8 @@ def filterArticles(urls):
 if __name__ == '__main__':
     model, x_test, y_test = trainModel()
     testModel(model, x_test, y_test)
+
+
     '''urls = getArticleURLS('optimistic news about coronavirus')
     pprint(urls)
     urls = [urls[0]]
