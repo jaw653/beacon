@@ -16,9 +16,9 @@ from textblob import TextBlob   # for sentiment analysis
 from selenium import webdriver  # FIXME: does Google have an API I can use instead of Selenium
 from selenium.webdriver.common.keys import Keys
 
-from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
+
 
 def getArticleURLS(query):
     '''
@@ -151,6 +151,64 @@ def scrapeData():
     with open('data.txt', 'w') as fp:
         for item in dataset:
             fp.write('%s\n' % item)
+    fp.close()
+
+    with open('classification.txt', 'w') as fp1:
+        for item in classification:
+            fp1.write('%s\n' % item)
+    fp1.close()
+
+    return dataset, classification
+
+
+def readData(filename):
+    '''
+    Reads polarity data from a file instead of scraping the web
+
+    Keyword Arguments:
+    filename -- Name of the file to be read from
+
+    return -- List from given file
+    '''
+    dataList = []
+
+    fp = open(filename, 'r')
+
+    line = fp.readline()
+    while line:
+        if len(line) > 1:
+            listElement = []
+            line = line.split(',')
+            for token in line:
+                if token[0] == '[':
+                    token = token[1:len(token)]   # strip bracket from number
+                elif token[len(token)-1] == '\n':
+                    token = token[0:len(token)-3]   # -3 b/c of trailing newline and bracket
+
+                print('appending ', float(token), ' to listElement')
+                listElement.append(float(token))
+
+            print('final list element is: ', listElement)
+            dataList.append(listElement)
+        
+        else:
+            dataList.append(int(line))
+        
+        line = fp.readline()
+
+    fp.close()
+
+    return dataList
+
+
+def readLists():
+    '''
+    Reads feature file and classification file and returns data
+    
+    return -- Dataset and classification lists
+    '''
+    dataset = readData('data.txt')
+    classification = readData('classification.txt')
 
     return dataset, classification
 
@@ -166,7 +224,10 @@ def trainModel():
     if fileSize == 0:
         dataset, classification = scrapeData()
     else:
-        pass
+        dataset, classification = readLists()
+
+    print('dataset is: ', dataset)
+    print('classification is: ', classification)
 
     gnb = GaussianNB()
 
@@ -174,7 +235,7 @@ def trainModel():
 
     # Split the training and testing data
     x_train, x_test, y_train, y_test = \
-        train_test_split(dataset, classification, test_size=0.7)        # FIXME: might want to try something besides 50/50 split
+        train_test_split(dataset, classification, test_size=0.5)        # FIXME: might want to try something besides 50/50 split
 
     model = gnb.fit(x_train, y_train)
 
@@ -195,6 +256,31 @@ def testModel(model, x_test, y_test):
     print(y_test)
     print('y_predict is:')
     print(y_predict)
+
+    i = 0
+    truePos = 0
+    trueNeg = 0
+    falsePos = 0
+    falseNeg = 0
+    for prediction in y_predict:
+        if prediction == 0:
+            if y_test[i] == 0:
+                truePos = truePos + 1
+            else:
+                falsePos = falsePos + 1
+        else:
+            if y_test[i] == 1:
+                trueNeg = trueNeg + 1
+            else:
+                falseNeg = falseNeg + 1
+        i = i + 1
+
+        # FIXME: Print the truth matrix calculated above!!!
+
+    print('true positives: ', truePos)
+    print('true negatives: ', trueNeg)
+    print('false positives: ', falsePos)
+    print('false negatives: ', falseNeg)
 
 
 
