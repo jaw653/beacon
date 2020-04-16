@@ -326,8 +326,8 @@ def filterArticles(urls):
 def sendEmails(mailingList):
     sslContext = ssl.create_default_context()
 
-    # senderEmail = 'beaconapp.hope@gmail.com'
-    senderEmail = 'jawax10@gmail.com'
+    senderEmail = 'beaconapp.hope@gmail.com'
+    # senderEmail = 'jawax10@gmail.com'
 
 
     server = smtplib.SMTP_SSL('smtp.gmail.com', 465, context=sslContext)
@@ -337,7 +337,15 @@ def sendEmails(mailingList):
         <html>
             <head></head>
             <body>
-                <p>test message</p>
+                <p>Hi guys! This message was sent from python. 
+                Working on refining machine learning to filter articles better
+                and then you should receive positive emails about coronavirus!</p>
+                </br>
+                </br>
+                <p>Love yah, Jake</p>
+                </br>
+                </br>
+                <p>P.S. You can respond to this email but I probably will not see it</p>
             </body>
         </html>
     '''
@@ -353,7 +361,7 @@ def sendEmails(mailingList):
 
 
 if __name__ == '__main__':
-    sendEmails(['jawachs@crimson.ua.edu'])
+    sendEmails(auth.mailingList)
     
     '''
     model, x_test, y_test = trainModel()
