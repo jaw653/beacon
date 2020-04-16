@@ -6,6 +6,7 @@ Beacon - A shining light in the storm
 """
 
 from classes.Article import Article
+import auth
 
 import newspaper
 import time
@@ -15,6 +16,9 @@ import requests
 from textblob import TextBlob   # for sentiment analysis
 from selenium import webdriver  # FIXME: does Google have an API I can use instead of Selenium
 from selenium.webdriver.common.keys import Keys
+import smtplib, ssl             # for sending emails
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
@@ -237,7 +241,7 @@ def trainModel():
     x_train, x_test, y_train, y_test = \
         train_test_split(dataset, classification, test_size=0.5)        # FIXME: might want to try something besides 50/50 split
 
-    model = gnb.fit(x_train, y_train)
+    model = gnb.fit(x_train, y_train.ravel())
 
     print('MODEL TRAINED.')
     return model, x_test, y_test
@@ -319,9 +323,42 @@ def filterArticles(urls):
     return positiveArticleURLs
 
 
+def sendEmails(mailingList):
+    sslContext = ssl.create_default_context()
+
+    # senderEmail = 'beaconapp.hope@gmail.com'
+    senderEmail = 'jawax10@gmail.com'
+
+
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465, context=sslContext)
+    server.login(senderEmail, auth.password)
+
+    payload = '''\
+        <html>
+            <head></head>
+            <body>
+                <p>test message</p>
+            </body>
+        </html>
+    '''
+    payload = MIMEText(payload, 'html')
+
+    for subscriber in mailingList:
+        message = MIMEMultipart()
+        message['From'] = senderEmail
+        message['To'] = subscriber
+        message['Subject'] = 'Hello from Beacon!'
+        message.attach(payload)
+        server.sendmail(senderEmail, subscriber, message.as_string())
+
+
 if __name__ == '__main__':
+    sendEmails(['jawachs@crimson.ua.edu'])
+    
+    '''
     model, x_test, y_test = trainModel()
     testModel(model, x_test, y_test)
+    '''
 
 
     '''urls = getArticleURLS('optimistic news about coronavirus')
