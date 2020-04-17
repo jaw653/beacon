@@ -19,6 +19,7 @@ from selenium.webdriver.common.keys import Keys
 import smtplib, ssl             # for sending emails
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import numpy as np
 
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
@@ -72,7 +73,7 @@ def getArticleInfo(url):
     if requests.get(url).text != None:      # Litmus test to see if forbidden from scraping site
         article.download()
 
-        print('PARSING ARTICLE')
+        print('PARSING ARTICLE: ', article.title)
         article.parse()
 
         return Article(article.title, article.text)
@@ -105,7 +106,7 @@ def extractNumbers(articleList, classificationList, c):
     i = 0
     dataset = []
     for article in articleList:
-        print('Conducting SA on article ', i)
+        print('Conducting SA on article: ', article.getTitle())
 
         title = article.getTitle()
         text = article.getText()
@@ -120,8 +121,6 @@ def extractNumbers(articleList, classificationList, c):
 
         dataset.append([titlePol, textPol])
         classificationList.append(c)
-        print('dataset is now:')
-        print(dataset)
 
     return dataset
 
@@ -143,11 +142,6 @@ def scrapeData():
 
     positiveDataset = extractNumbers(positiveArticles, classification, 0)
     negativeDataset = extractNumbers(negativeArticles, classification, 1)
-
-    '''print('positive dataset is:')
-    print(positiveDataset)
-    print('negativeDataset is: ')
-    print(negativeDataset)'''
 
     # Join the datasets together to create the data which will be trained/tested on
     dataset = positiveDataset + negativeDataset
@@ -180,7 +174,7 @@ def readData(filename):
 
     line = fp.readline()
     while line:
-        if len(line) > 1:
+        if len(line) > 2:
             listElement = []
             line = line.split(',')
             for token in line:
@@ -189,10 +183,10 @@ def readData(filename):
                 elif token[len(token)-1] == '\n':
                     token = token[0:len(token)-3]   # -3 b/c of trailing newline and bracket
 
-                print('appending ', float(token), ' to listElement')
+                # print('appending ', float(token), ' to listElement')
                 listElement.append(float(token))
 
-            print('final list element is: ', listElement)
+            print('this should be a 2 value list: ', listElement)
             dataList.append(listElement)
         
         else:
@@ -241,7 +235,7 @@ def trainModel():
     x_train, x_test, y_train, y_test = \
         train_test_split(dataset, classification, test_size=0.5)        # FIXME: might want to try something besides 50/50 split
 
-    model = gnb.fit(x_train, y_train.ravel())
+    model = gnb.fit(x_train, y_train)
 
     print('MODEL TRAINED.')
     return model, x_test, y_test
@@ -253,15 +247,13 @@ def testModel(model, x_test, y_test):
     '''
     print('TESTING MODEL...')
     y_predict = model.predict(x_test)
-    print('predicted:')
-    print(y_predict)
 
-    print('y_test is:')
+    print('correct classifications:')
     print(y_test)
-    print('y_predict is:')
+    print('guesses are:')
     print(y_predict)
 
-    i = 0
+'''    i = 0
     truePos = 0
     trueNeg = 0
     falsePos = 0
@@ -284,7 +276,7 @@ def testModel(model, x_test, y_test):
     print('true positives: ', truePos)
     print('true negatives: ', trueNeg)
     print('false positives: ', falsePos)
-    print('false negatives: ', falseNeg)
+    print('false negatives: ', falseNeg)'''
 
 
 
@@ -302,16 +294,13 @@ def filterArticles(urls):
     index = 0
     positiveArticleURLs = []
     for article in articles:
-        # conduct sentiment analysis
-        # run machine learning algorithm on the polarity of the sentiment analysis as the classifying number
-        # if positive article, add to list of positives
         title = article.getTitle()
         text = article.getText()
 
         blob0 = TextBlob(title)
         blob1 = TextBlob(text)
-        print('title sentiment: ', blob0.sentiment.polarity)
-        print('text sentiment: ', blob1.sentiment.polarity)
+        # print('title sentiment: ', blob0.sentiment.polarity)
+        # print('text sentiment: ', blob1.sentiment.polarity)
 
         currPair = [blob0.sentiment.polarity, blob1.sentiment.polarity]
 
@@ -323,12 +312,10 @@ def filterArticles(urls):
     return positiveArticleURLs
 
 
-def sendEmails(mailingList):
+def sendEmails(mailingList, msg):
     sslContext = ssl.create_default_context()
 
     senderEmail = 'beaconapp.hope@gmail.com'
-    # senderEmail = 'jawax10@gmail.com'
-
 
     server = smtplib.SMTP_SSL('smtp.gmail.com', 465, context=sslContext)
     server.login(senderEmail, auth.password)
@@ -361,12 +348,10 @@ def sendEmails(mailingList):
 
 
 if __name__ == '__main__':
-    sendEmails(auth.mailingList)
+    # sendEmails(auth.mailingList)
     
-    '''
     model, x_test, y_test = trainModel()
     testModel(model, x_test, y_test)
-    '''
 
 
     '''urls = getArticleURLS('optimistic news about coronavirus')
