@@ -76,16 +76,14 @@ def getArticleInfo(url):
         res = None
 
     if res != None:      # Litmus test to see if forbidden from scraping site
-        print('attempting to download: ', url)
         article.download()
-        print('Article downloaded.')
 
         article.parse()
         print('PARSED ARTICLE: ', article.title)
 
         return Article(article.title, article.text)
     else:
-        return None
+        return None         # FIXME: if this is an issue, just return Article('neutral', 'neutral')
 
 
 def getArticles(urls):
@@ -142,11 +140,8 @@ def scrapeData():
     positiveURLs = getArticleURLS('optimistc news about coronavirus')
     negativeURLs = getArticleURLS('coronavirus news getting worse')
 
-    print('GETTING POSITIVE ARTICLES...')
     positiveArticles = getArticles(positiveURLs)
-    print('GETTING NEGATIVE ARTICLES')
     negativeArticles = getArticles(negativeURLs)
-    print('COLLECTION OF ARTICLES COMPLETE.')
 
     classification = []
 
@@ -263,30 +258,14 @@ def testModel(model, x_test, y_test):
     print('guesses are:')
     print(y_predict)
 
-'''    i = 0
-    truePos = 0
-    trueNeg = 0
-    falsePos = 0
-    falseNeg = 0
+    i = 0
+    correct = 0
     for prediction in y_predict:
-        if prediction == 0:
-            if y_test[i] == 0:
-                truePos = truePos + 1
-            else:
-                falsePos = falsePos + 1
-        else:
-            if y_test[i] == 1:
-                trueNeg = trueNeg + 1
-            else:
-                falseNeg = falseNeg + 1
+        if prediction == y_test[i]:
+            correct = correct + 1
         i = i + 1
 
-        # FIXME: Print the truth matrix calculated above!!!
-
-    print('true positives: ', truePos)
-    print('true negatives: ', trueNeg)
-    print('false positives: ', falsePos)
-    print('false negatives: ', falseNeg)'''
+    print(correct, '/', len(y_predict), ' or ', correct/len(y_predict), ' correct')
 
 
 
