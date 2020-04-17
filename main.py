@@ -70,11 +70,18 @@ def getArticleInfo(url):
     '''
     article = newspaper.Article(url)
 
-    if requests.get(url).text != None:      # Litmus test to see if forbidden from scraping site
-        article.download()
+    try:
+        res = requests.get(url, timeout=5).text
+    except:
+        res = None
 
-        print('PARSING ARTICLE: ', article.title)
+    if res != None:      # Litmus test to see if forbidden from scraping site
+        print('attempting to download: ', url)
+        article.download()
+        print('Article downloaded.')
+
         article.parse()
+        print('PARSED ARTICLE: ', article.title)
 
         return Article(article.title, article.text)
     else:
@@ -135,8 +142,11 @@ def scrapeData():
     positiveURLs = getArticleURLS('optimistc news about coronavirus')
     negativeURLs = getArticleURLS('coronavirus news getting worse')
 
+    print('GETTING POSITIVE ARTICLES...')
     positiveArticles = getArticles(positiveURLs)
+    print('GETTING NEGATIVE ARTICLES')
     negativeArticles = getArticles(negativeURLs)
+    print('COLLECTION OF ARTICLES COMPLETE.')
 
     classification = []
 
