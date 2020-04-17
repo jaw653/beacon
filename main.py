@@ -45,6 +45,13 @@ def getArticleURLS(query):
     time.sleep(2)
 
     links = driver.find_elements_by_tag_name('a')
+
+    nextXpath = '/html/body/div[6]/div[2]/div[9]/div[1]/div[2]\
+        /div/div[5]/div[2]/span[1]/div/table/tbody/tr/td[12]/a/span[2]'
+
+    # click the above xpath to go to the next page.
+    # append new page links to links list
+    # repeat __ amount of times
     
     hrefs = []
     for link in links:
