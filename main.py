@@ -63,7 +63,7 @@ def getArticleURLS(query):
         /div/div[5]/div[2]/span[1]/div/table/tbody/tr/td[12]/a/span[2]'
 
     hrefs = []
-    for i in range(0,5):
+    for i in range(0,1):
         # time.sleep(1)
         currURLs = getPageURLS(driver)
         hrefs = hrefs + currURLs
@@ -269,7 +269,7 @@ def trainModel():
 
     # Split the training and testing data
     x_train, x_test, y_train, y_test = \
-        train_test_split(dataset, classification, test_size=0.5)        # FIXME: might want to try something besides 50/50 split
+        train_test_split(dataset, classification, test_size=0.3)        # FIXME: might want to try something besides 50/50 split
 
     model = gnb.fit(x_train, y_train)
 
@@ -300,7 +300,7 @@ def testModel(model, x_test, y_test):
 
 
 
-def filterArticles(urls):
+def filterArticles(urls, model):
     '''
     Removes negative or indifferent articles from the list
 
@@ -324,8 +324,10 @@ def filterArticles(urls):
 
         currPair = [blob0.sentiment.polarity, blob1.sentiment.polarity]
 
-        if blob1.sentiment.polarity > 0:                    # FIXME: replace this with MACHINE LEARNING!!!
+        if model.predict([currPair]) == 0:                    # FIXME: replace this with MACHINE LEARNING!!!
             positiveArticleURLs.append(urls[index])
+        else:
+            print('ARTICLE ', article.getTitle(), ' FLAGGED AS NEGATIVE')
 
         index += 1
 
@@ -344,15 +346,16 @@ def sendEmails(mailingList, msg):               # FIXME: craft message with link
         <html>
             <head></head>
             <body>
-                <p>Hi guys! This message was sent from python. 
-                Working on refining machine learning to filter articles better
-                and then you should receive positive emails about coronavirus!</p>
+                <p>Hi from Beacon!</p>
                 </br>
                 </br>
-                <p>Love yah, Jake</p>
+                <p>If you're getting this message, it means that 5,000 more people recovered
+                from COVID-19! That's 5,000 more lives saved. Here's some optimistic news about
+                the pandemic to brighten your day:</p>
                 </br>
                 </br>
-                <p>P.S. You can respond to this email but I probably will not see it</p>
+                <p></p>                                             # FIXME: good news articles here
+                <p>+++++I AM A ROBOT, PLEASE DO NOT REPLY+++++</p>
             </body>
         </html>
     '''
@@ -371,15 +374,13 @@ if __name__ == '__main__':
     # sendEmails(auth.mailingList)
     
     model, x_test, y_test = trainModel()
-    testModel(model, x_test, y_test)
+    # testModel(model, x_test, y_test)
 
 
-    '''urls = getArticleURLS('optimistic news about coronavirus')
-    # pprint(urls)
-    # urls = [urls[0]]
-    positiveArticles = filterArticles(urls)
+    urls = getArticleURLS('optimistic news about coronavirus')
+    positiveArticles = filterArticles(urls, model)
 
-    pprint(positiveArticles)'''
+    # pprint(positiveArticles)
 
     # filteredList = filterArticles(articles)
 
