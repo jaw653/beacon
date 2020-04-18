@@ -5,15 +5,42 @@ Date: 04/02/2020
 Beacon - A shining light in the storm
 """
 
-from newspaper import Article
+from classes.Article import Article
+import auth
+
+import newspaper
 import time
+import os
 from pprint import pprint       # FIXME: just for testing purposes
 import requests
 from textblob import TextBlob   # for sentiment analysis
 from selenium import webdriver  # FIXME: does Google have an API I can use instead of Selenium
 from selenium.webdriver.common.keys import Keys
+import smtplib, ssl             # for sending emails
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import numpy as np
 
-def getArticleURLS():
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+
+
+def getPageURLS(driver):
+    '''
+    Gets all of the URLs on a page
+    '''
+    links = driver.find_elements_by_tag_name('a')
+    
+    hrefs = []
+    for link in links:
+        hyperlink = link.get_attribute('href')
+        if hyperlink != None and 'google' not in hyperlink:
+            hrefs.append(hyperlink)
+
+    return hrefs
+
+
+def getArticleURLS(query):
     '''
     Gets list of good news article URLs about COVID-19
 
@@ -26,46 +53,59 @@ def getArticleURLS():
     driver.get('https://www.google.com')
 
     que = driver.find_element_by_xpath("//input[@name='q']")
-    que.send_keys('good positive news about coronavirus')
+    que.send_keys(query)
     que.send_keys(Keys.RETURN)
 
     # Wait for browser to get to new page before finding links
-    time.sleep(2)
+    time.sleep(1)
 
-    links = driver.find_elements_by_tag_name('a')
-    
+    nextXpath = '/html/body/div[6]/div[2]/div[9]/div[1]/div[2]\
+        /div/div[5]/div[2]/span[1]/div/table/tbody/tr/td[12]/a/span[2]'
+
     hrefs = []
-    for link in links:
-        hyperlink = link.get_attribute('href')
-        if hyperlink != None and 'google' not in hyperlink:
-            hrefs.append(hyperlink)
+    for i in range(0,1):
+        # time.sleep(1)
+        currURLs = getPageURLS(driver)
+        hrefs = hrefs + currURLs
+        nextBtn = driver.find_element_by_xpath(nextXpath)
+        nextBtn.click()
 
-    # FIXME: get more articles than are just on the first page
+    print(hrefs)
 
     driver.close()
 
     return hrefs
 
 
-def getArticleText(url):
+def getArticleInfo(url):
     '''
     Gets the text of a given article
     
     Keyword Arguments:
     url -- The URL for the article to parse
 
-    return -- Text of the article at the given url
+    return -- Article object w/ both title and text of article at url
     '''
-    article = Article(url)
+    article = newspaper.Article(url)
 
     try:
-        article.download()
+        res = requests.get(url, timeout=5).text
     except:
-        pass
+        res = None
 
-    article.parse()
+    if res != None:      # Litmus test to see if forbidden from scraping site
+        try:
+            article.download()
+            article.parse()
+            print('PARSED ARTICLE: ', article.title)
 
-    return article.text
+            return Article(article.title, article.text)
+        except:
+            return None
+
+
+    else:
+        return None         # FIXME: if this is an issue, just return Article('neutral', 'neutral')
 
 
 def getArticles(urls):
@@ -81,12 +121,186 @@ def getArticles(urls):
     '''
     articles = []
     for url in urls:
-        articles.append(getArticleText(url))
+        articles.append(getArticleInfo(url))
 
     return articles
 
 
-def filterArticles(urls):
+def extractNumbers(articleList, classificationList, c):
+    '''
+    Conducts sentiment analysis on each article in the given article list
+
+    Keyword Arguments:
+    articleList -- list of Article objects
+
+    classificationList -- empty list to append 0 or 1 on
+
+    c -- classification of current article (0 or 1)
+
+    return -- the dataset of polarities
+    '''
+    i = 0
+    dataset = []
+    for article in articleList:
+        if article != None:         # FIXME: change != to not
+            print('Conducting SA on article: ', article.getTitle())
+
+            title = article.getTitle()
+            text = article.getText()
+
+            i = i + 1
+
+            blob0 = TextBlob(title)
+            blob1 = TextBlob(text)
+
+            titlePol = blob0.sentiment.polarity
+            textPol = blob1.sentiment.polarity
+
+            dataset.append([titlePol, textPol])
+            classificationList.append(c)
+
+    return dataset
+
+
+def scrapeData():
+    '''
+    Collects and aggregates data for train/test purposes
+
+    return -- the aggregate feature dataset and accompanying classifications
+    '''
+    print('GETTING DATA...')
+    positiveURLs = getArticleURLS('optimistc news about coronavirus')
+    negativeURLs = getArticleURLS('coronavirus news getting worse')
+
+    positiveArticles = getArticles(positiveURLs)
+    negativeArticles = getArticles(negativeURLs)
+
+    classification = []
+
+    positiveDataset = extractNumbers(positiveArticles, classification, 0)
+    negativeDataset = extractNumbers(negativeArticles, classification, 1)
+
+    # Join the datasets together to create the data which will be trained/tested on
+    dataset = positiveDataset + negativeDataset
+
+    with open('data.txt', 'w') as fp:
+        for item in dataset:
+            fp.write('%s\n' % item)
+    fp.close()
+
+    with open('classification.txt', 'w') as fp1:
+        for item in classification:
+            fp1.write('%s\n' % item)
+    fp1.close()
+
+    return dataset, classification
+
+
+def readData(filename):
+    '''
+    Reads polarity data from a file instead of scraping the web
+
+    Keyword Arguments:
+    filename -- Name of the file to be read from
+
+    return -- List from given file
+    '''
+    dataList = []
+
+    fp = open(filename, 'r')
+
+    line = fp.readline()
+    while line:
+        if len(line) > 2:
+            listElement = []
+            line = line.split(',')
+            for token in line:
+                if token[0] == '[':
+                    token = token[1:len(token)]   # strip bracket from number
+                elif token[len(token)-1] == '\n':
+                    token = token[0:len(token)-3]   # -3 b/c of trailing newline and bracket
+
+                listElement.append(float(token))
+
+            print('this should be a 2 value list: ', listElement)
+            dataList.append(listElement)
+        
+        else:
+            dataList.append(int(line))
+        
+        line = fp.readline()
+
+    fp.close()
+
+    return dataList
+
+
+def readLists():
+    '''
+    Reads feature file and classification file and returns data
+    
+    return -- Dataset and classification lists
+    '''
+    dataset = readData('data.txt')
+    classification = readData('classification.txt')
+
+    return dataset, classification
+
+
+def trainModel():
+    '''
+    Trains model based on data
+
+    return -- the model itself for prediction purposes
+    '''
+    fileSize = os.path.getsize('data.txt')
+
+    if fileSize == 0:
+        dataset, classification = scrapeData()
+    else:
+        dataset, classification = readLists()
+
+    print('dataset is: ', dataset)
+    print('classification is: ', classification)
+
+    gnb = GaussianNB()
+
+    print('TRAINING MODEL...')
+
+    # Split the training and testing data
+    x_train, x_test, y_train, y_test = \
+        train_test_split(dataset, classification, test_size=0.3)        # FIXME: might want to try something besides 50/50 split
+
+    model = gnb.fit(x_train, y_train)
+
+    print('MODEL TRAINED.')
+    return model, x_test, y_test
+
+
+def testModel(model, x_test, y_test):
+    '''
+    Tests model accuracy; for testing purposes only
+    '''
+    print('TESTING MODEL...')
+    y_predict = model.predict(x_test)
+
+    print('correct classifications:')
+    print(y_test)
+    print('guesses are:')
+    print(y_predict)
+
+    i = 0
+    correct = 0
+    for prediction in y_predict:
+        if prediction == y_test[i]:
+            correct = correct + 1
+        i = i + 1
+
+    print(correct, '/', len(y_predict), ' or ', correct/len(y_predict), ' correct')
+
+
+
+def filterArticles(urls, model):
     '''
     Removes negative or indifferent articles from the list
 
@@ -100,27 +314,73 @@ def filterArticles(urls):
     index = 0
     positiveArticleURLs = []
     for article in articles:
-        # conduct sentiment analysis
-        # run machine learning algorithm on the polarity of the sentiment analysis as the classifying number
-        # if positive article, add to list of positives
+        title = article.getTitle()
+        text = article.getText()
 
-        blob = TextBlob(article)
-        print(blob.sentiment)
-        if blob.sentiment.polarity > 0:
+        blob0 = TextBlob(title)
+        blob1 = TextBlob(text)
+        # print('title sentiment: ', blob0.sentiment.polarity)
+        # print('text sentiment: ', blob1.sentiment.polarity)
+
+        currPair = [blob0.sentiment.polarity, blob1.sentiment.polarity]
+
+        if model.predict([currPair]) == 0:                    # FIXME: replace this with MACHINE LEARNING!!!
             positiveArticleURLs.append(urls[index])
+        else:
+            print('ARTICLE ', article.getTitle(), ' FLAGGED AS NEGATIVE')
 
         index += 1
 
     return positiveArticleURLs
 
 
-if __name__ == '__main__':
-    urls = getArticleURLS()
-    pprint(urls)
-    # urls = [urls[0], urls[3], urls[6], urls[9], urls[12]]
-    positiveArticles = filterArticles(urls)
+def sendEmails(mailingList, msg):               # FIXME: craft message with links and pass in here
+    sslContext = ssl.create_default_context()
 
-    pprint(positiveArticles)
+    senderEmail = 'beaconapp.hope@gmail.com'
+
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465, context=sslContext)
+    server.login(senderEmail, auth.password)
+
+    payload = '''\
+        <html>
+            <head></head>
+            <body>
+                <p>Hi from Beacon!</p>
+                </br>
+                </br>
+                <p>If you're getting this message, it means that 5,000 more people recovered
+                from COVID-19! That's 5,000 more lives saved. Here's some optimistic news about
+                the pandemic to brighten your day:</p>
+                </br>
+                </br>
+                <p></p>                                             # FIXME: good news articles here
+                <p>+++++I AM A ROBOT, PLEASE DO NOT REPLY+++++</p>
+            </body>
+        </html>
+    '''
+    payload = MIMEText(payload, 'html')
+
+    for subscriber in mailingList:
+        message = MIMEMultipart()
+        message['From'] = senderEmail
+        message['To'] = subscriber
+        message['Subject'] = 'Hello from Beacon!'
+        message.attach(payload)
+        server.sendmail(senderEmail, subscriber, message.as_string())
+
+
+if __name__ == '__main__':
+    # sendEmails(auth.mailingList)
+    
+    model, x_test, y_test = trainModel()
+    # testModel(model, x_test, y_test)
+
+
+    urls = getArticleURLS('optimistic news about coronavirus')
+    positiveArticles = filterArticles(urls, model)
+
+    # pprint(positiveArticles)
 
     # filteredList = filterArticles(articles)
 
