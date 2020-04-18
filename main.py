@@ -2,14 +2,14 @@
 Author: Jake Wachs
 Date: 04/02/2020
 
-Beacon - A shining light in the storm
+Beacon - COVID-19 optimism bot
 """
 
 from classes.Article import Article
 import auth
 
 import newspaper
-import time
+import sched, time
 import os
 from pprint import pprint       # FIXME: just for testing purposes
 import requests
@@ -196,6 +196,36 @@ def scrapeData():
     return dataset, classification
 
 
+def checkRecoveries(prevNum):
+    '''
+    Checks the JHU CV dashboard for number recovered
+
+    Keyword Arguments:
+    prevNum -- the previous number recovered
+
+    return -- the difference between last time and this time of num recovered
+    '''
+    driver = webdriver.Firefox()
+    driver.get('https://coronavirus.jhu.edu/map.html')
+
+    numRecovPath = '/html/body/div/div/div[2]/div/div/div/margin-container/full-container/div[16]/margin-container/full-container/div/div/div/div[2]/svg/g[2]/svg/text'
+
+    time.sleep(25)
+
+    # FIXME: if the below doesn't work, going to have to do a get from
+    # https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/04-17-2020.csv
+    # replacing the date at the end of the csv with the current date
+    # then sum the total number of recovered from each line and check it
+    recoveredBtn = driver.find_element_by_id('ember338')
+    time.sleep(1)
+
+    target = driver.find_element_by_xpath(numRecovPath)
+    
+    print(target)
+
+    driver.close()
+
+
 def readData(filename):
     '''
     Reads polarity data from a file instead of scraping the web
@@ -365,26 +395,23 @@ def sendEmails(mailingList, msg):               # FIXME: craft message with link
         message = MIMEMultipart()
         message['From'] = senderEmail
         message['To'] = subscriber
-        message['Subject'] = 'Hello from Beacon!'
+        message['Subject'] = '5,000 More Recover from COVID-19'
         message.attach(payload)
         server.sendmail(senderEmail, subscriber, message.as_string())
 
 
 if __name__ == '__main__':
+    # FIXME: use scheduler to check jhu site every 12 hours
     # sendEmails(auth.mailingList)
+    checkRecoveries(0)
     
-    model, x_test, y_test = trainModel()
+    '''model, x_test, y_test = trainModel()
     # testModel(model, x_test, y_test)
 
 
     urls = getArticleURLS('optimistic news about coronavirus')
-    positiveArticles = filterArticles(urls, model)
+    positiveArticles = filterArticles(urls, model)'''
 
     # pprint(positiveArticles)
 
     # filteredList = filterArticles(articles)
-
-    # Get a bunch of articles from the internet about coronavirus
-    # Iterate over each article, classifying it as good or bad
-        # If good, add it to the growing list of good articles
-    # chron-esque job to craft email and then send once per week, day, month, etc. (using twilio)
