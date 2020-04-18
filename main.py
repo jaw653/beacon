@@ -25,6 +25,21 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 
 
+def getPageURLS(driver):
+    '''
+    Gets all of the URLs on a page
+    '''
+    links = driver.find_elements_by_tag_name('a')
+    
+    hrefs = []
+    for link in links:
+        hyperlink = link.get_attribute('href')
+        if hyperlink != None and 'google' not in hyperlink:
+            hrefs.append(hyperlink)
+
+    return hrefs
+
+
 def getArticleURLS(query):
     '''
     Gets list of good news article URLs about COVID-19
@@ -42,24 +57,20 @@ def getArticleURLS(query):
     que.send_keys(Keys.RETURN)
 
     # Wait for browser to get to new page before finding links
-    time.sleep(2)
-
-    links = driver.find_elements_by_tag_name('a')
+    time.sleep(1)
 
     nextXpath = '/html/body/div[6]/div[2]/div[9]/div[1]/div[2]\
         /div/div[5]/div[2]/span[1]/div/table/tbody/tr/td[12]/a/span[2]'
 
-    # click the above xpath to go to the next page.
-    # append new page links to links list
-    # repeat __ amount of times
-    
     hrefs = []
-    for link in links:
-        hyperlink = link.get_attribute('href')
-        if hyperlink != None and 'google' not in hyperlink:
-            hrefs.append(hyperlink)
+    for i in range(0,5):
+        # time.sleep(1)
+        currURLs = getPageURLS(driver)
+        hrefs = hrefs + currURLs
+        nextBtn = driver.find_element_by_xpath(nextXpath)
+        nextBtn.click()
 
-    # FIXME: get more articles than are just on the first page
+    print(hrefs)
 
     driver.close()
 
@@ -83,12 +94,16 @@ def getArticleInfo(url):
         res = None
 
     if res != None:      # Litmus test to see if forbidden from scraping site
-        article.download()
+        try:
+            article.download()
+            article.parse()
+            print('PARSED ARTICLE: ', article.title)
 
-        article.parse()
-        print('PARSED ARTICLE: ', article.title)
+            return Article(article.title, article.text)
+        except:
+            return None
 
-        return Article(article.title, article.text)
+
     else:
         return None         # FIXME: if this is an issue, just return Article('neutral', 'neutral')
 
@@ -114,25 +129,35 @@ def getArticles(urls):
 def extractNumbers(articleList, classificationList, c):
     '''
     Conducts sentiment analysis on each article in the given article list
+
+    Keyword Arguments:
+    articleList -- list of Article objects
+
+    classificationList -- empty list to append 0 or 1 on
+
+    c -- classification of current article (0 or 1)
+
+    return -- the dataset of polarities
     '''
     i = 0
     dataset = []
     for article in articleList:
-        print('Conducting SA on article: ', article.getTitle())
+        if article != None:         # FIXME: change != to not
+            print('Conducting SA on article: ', article.getTitle())
 
-        title = article.getTitle()
-        text = article.getText()
+            title = article.getTitle()
+            text = article.getText()
 
-        i = i + 1
+            i = i + 1
 
-        blob0 = TextBlob(title)
-        blob1 = TextBlob(text)
+            blob0 = TextBlob(title)
+            blob1 = TextBlob(text)
 
-        titlePol = blob0.sentiment.polarity
-        textPol = blob1.sentiment.polarity
+            titlePol = blob0.sentiment.polarity
+            textPol = blob1.sentiment.polarity
 
-        dataset.append([titlePol, textPol])
-        classificationList.append(c)
+            dataset.append([titlePol, textPol])
+            classificationList.append(c)
 
     return dataset
 
@@ -195,7 +220,6 @@ def readData(filename):
                 elif token[len(token)-1] == '\n':
                     token = token[0:len(token)-3]   # -3 b/c of trailing newline and bracket
 
-                # print('appending ', float(token), ' to listElement')
                 listElement.append(float(token))
 
             print('this should be a 2 value list: ', listElement)
@@ -300,7 +324,7 @@ def filterArticles(urls):
 
         currPair = [blob0.sentiment.polarity, blob1.sentiment.polarity]
 
-        if blob1.sentiment.polarity > 0:
+        if blob1.sentiment.polarity > 0:                    # FIXME: replace this with MACHINE LEARNING!!!
             positiveArticleURLs.append(urls[index])
 
         index += 1
@@ -308,7 +332,7 @@ def filterArticles(urls):
     return positiveArticleURLs
 
 
-def sendEmails(mailingList, msg):
+def sendEmails(mailingList, msg):               # FIXME: craft message with links and pass in here
     sslContext = ssl.create_default_context()
 
     senderEmail = 'beaconapp.hope@gmail.com'
@@ -351,8 +375,8 @@ if __name__ == '__main__':
 
 
     '''urls = getArticleURLS('optimistic news about coronavirus')
-    pprint(urls)
-    urls = [urls[0]]
+    # pprint(urls)
+    # urls = [urls[0]]
     positiveArticles = filterArticles(urls)
 
     pprint(positiveArticles)'''
