@@ -9,7 +9,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 import os
 
-from main import scrapeData
+from web import scrapeData
+from util import readLists
 
 def trainModel():
     '''
@@ -73,7 +74,7 @@ def filterArticles(urls, model):
         index += 1
 
     return positiveArticleURLs
-    
+
 
 def testmodel(model, x_test, y_test):
     '''
