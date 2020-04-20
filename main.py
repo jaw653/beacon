@@ -4,19 +4,21 @@ Date: 04/02/2020
 
 Beacon - COVID-19 optimism bot
 """
-from ml import trainModel
+from ml import trainModel, filterArticles
+from web import getArticleURLS
+from util import craftMsg
+from util import sendEmails
+from web import checkRecoveries
+import auth
 
 import time
-from pprint import pprint       # FIXME: just for testing purposes
-
-
 
 if __name__ == '__main__':
     model, x_test, y_test = trainModel()
-    '''urls = getArticleURLS('optimistic news about coronavirus', 1)
+    urls = getArticleURLS('optimistic news about coronavirus', 1)
     positiveArticles = filterArticles(urls, model)
     msg = craftMsg(positiveArticles)
-    sendEmails(auth.mailingList, msg)'''
+    sendEmails(auth.mailingList, msg)
 '''
     lastRecovered = checkRecoveries(0)
 
