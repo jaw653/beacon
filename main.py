@@ -10,6 +10,7 @@ import auth
 
 import newspaper
 import sched, time
+from datetime import date
 import os
 from pprint import pprint       # FIXME: just for testing purposes
 import requests
@@ -19,7 +20,8 @@ from selenium.webdriver.common.keys import Keys
 import smtplib, ssl             # for sending emails
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import numpy as np
+import pandas as pd
+import csv
 
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
@@ -196,6 +198,28 @@ def scrapeData():
     return dataset, classification
 
 
+def getReport():
+    '''
+    Gets the open CSV data from JHU github
+
+    return -- raw data HTTP response
+    '''
+    today = date.today()
+    formattedDate = '{:02d}'.format(today.month) + '-' + '{:02d}'.format(today.day) + '-' + str(today.year)
+
+    reportLink0 = ('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/'
+        'master/csse_covid_19_data/csse_covid_19_daily_reports/')
+    reportLink1 = reportLink0 + formattedDate + '.csv'
+
+    res = requests.get(reportLink1)
+    if res.status_code == 404:
+        formattedDate = '{:02d}'.format(today.month) + '-' + '{:02d}'.format(today.day-1) + '-' + str(today.year)       # FIXME: edge case of first day of new month, need to subtract the month instead of day
+        newLink = reportLink0 + formattedDate + '.csv'
+        res = requests.get(newLink)
+
+    return res
+
+
 def checkRecoveries(prevNum):
     '''
     Checks the JHU CV dashboard for number recovered
@@ -205,25 +229,21 @@ def checkRecoveries(prevNum):
 
     return -- the difference between last time and this time of num recovered
     '''
-    driver = webdriver.Firefox()
-    driver.get('https://coronavirus.jhu.edu/map.html')
+    rawReport = getReport().text
 
-    numRecovPath = '/html/body/div/div/div[2]/div/div/div/margin-container/full-container/div[16]/margin-container/full-container/div/div/div/div[2]/svg/g[2]/svg/text'
+    # print(rawReport)
 
-    time.sleep(25)
+    lines = rawReport.splitlines()
+    data = csv.reader(lines)
+    # print(data)
+    totalRecovered = 0
+    for row in data:
+        if row[9].isdigit():
+            totalRecovered = totalRecovered + int(row[9])
 
-    # FIXME: if the below doesn't work, going to have to do a get from
-    # https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/04-17-2020.csv
-    # replacing the date at the end of the csv with the current date
-    # then sum the total number of recovered from each line and check it
-    recoveredBtn = driver.find_element_by_id('ember338')
-    time.sleep(1)
+    print(totalRecovered)
 
-    target = driver.find_element_by_xpath(numRecovPath)
-    
-    print(target)
-
-    driver.close()
+    return totalRecovered - prevNum
 
 
 def readData(filename):
@@ -403,7 +423,7 @@ def sendEmails(mailingList, msg):               # FIXME: craft message with link
 if __name__ == '__main__':
     # FIXME: use scheduler to check jhu site every 12 hours
     # sendEmails(auth.mailingList)
-    checkRecoveries(0)
+    # checkRecoveries(0)
     
     '''model, x_test, y_test = trainModel()
     # testModel(model, x_test, y_test)
