@@ -384,6 +384,37 @@ def filterArticles(urls, model):
     return positiveArticleURLs
 
 
+def craftMsg(urls):
+    '''
+    Takes the urls of positive articles and converts to proper string
+    
+    Keyword Arguments:
+    urls -- the urls of positive articles
+
+    return -- proper html string of message
+    '''
+    msg = '''\
+        <html>
+            <head></head>
+            <body>
+                <p>Hi from Beacon!</p>
+                </br>
+                </br>
+                <p>If you're getting this message, it means that 10,000 more people recovered
+                from COVID-19! That's 10,000 more lives saved. Here's some optimistic news about
+                the pandemic to brighten your day:</p>
+                </br>
+                </br>
+    '''
+
+    for url in urls:
+        msg = msg + '</br></br>' + str(url)
+
+    msg = msg + '<p>+++++I AM A ROBOT, PLEASE DO NOT REPLY+++++</p></body></html>'
+
+    return msg
+
+
 def sendEmails(mailingList, msg):               # FIXME: craft message with links and pass in here
     sslContext = ssl.create_default_context()
 
@@ -392,46 +423,40 @@ def sendEmails(mailingList, msg):               # FIXME: craft message with link
     server = smtplib.SMTP_SSL('smtp.gmail.com', 465, context=sslContext)
     server.login(senderEmail, auth.password)
 
-    payload = '''\
-        <html>
-            <head></head>
-            <body>
-                <p>Hi from Beacon!</p>
-                </br>
-                </br>
-                <p>If you're getting this message, it means that 5,000 more people recovered
-                from COVID-19! That's 5,000 more lives saved. Here's some optimistic news about
-                the pandemic to brighten your day:</p>
-                </br>
-                </br>
-                <p></p>                                             # FIXME: good news articles here
-                <p>+++++I AM A ROBOT, PLEASE DO NOT REPLY+++++</p>
-            </body>
-        </html>
-    '''
-    payload = MIMEText(payload, 'html')
+    payload = MIMEText(msg, 'html')
 
     for subscriber in mailingList:
         message = MIMEMultipart()
         message['From'] = senderEmail
         message['To'] = subscriber
-        message['Subject'] = '5,000 More Recover from COVID-19'
+        message['Subject'] = '10,000 More Recover from COVID-19'
         message.attach(payload)
         server.sendmail(senderEmail, subscriber, message.as_string())
 
 
 if __name__ == '__main__':
-    # FIXME: use scheduler to check jhu site every 12 hours
-    # sendEmails(auth.mailingList)
-    # checkRecoveries(0)
-    
-    '''model, x_test, y_test = trainModel()
-    # testModel(model, x_test, y_test)
-
-
+    model, x_test, y_test = trainModel()
     urls = getArticleURLS('optimistic news about coronavirus')
-    positiveArticles = filterArticles(urls, model)'''
+    positiveArticles = filterArticles(urls, model)
+    msg = craftMsg(positiveArticles)
+    sendEmails(auth.mailingList, msg)
+'''
+    lastRecovered = checkRecoveries(0)
 
-    # pprint(positiveArticles)
+    model, x_test, y_test = trainModel()
 
-    # filteredList = filterArticles(articles)
+    WAIT_TIME = 86400       # 24 hours
+    while True:
+        recoveredDifference = checkRecoveries(lastRecovered)
+
+        if recoveredDifference >= 10000:
+            lastRecovered = checkRecoveries(0)
+    
+            urls = getArticleURLS('optimistic news about coronavirus')
+            positiveArticles = filterArticles(urls, model)
+
+            msg = craftMsg(positiveArticles)
+            sendEmails(auth.mailingList, msg)
+        
+        time.sleep(WAIT_TIME)
+'''
