@@ -5,12 +5,44 @@ Date: 04/20/2020
 Machine learning related functions
 """
 
+import matplotlib.pyplot as plt
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
+import numpy as np
 import os
 
 from web import scrapeData
 from util import readLists
+
+import pandas as pd
+
+def runClustering():
+    '''
+    Runs k-means clustering algorithm on data
+    '''
+    positiveURLs = getArticleURLS('optimistc news about coronavirus', 2)
+    negativeURLs = getArticleURLS('coronavirus news getting worse', 2)
+
+    positiveArticles = getArticles(positiveURLs)
+    negativeArticles = getArticles(negativeURLs)
+
+    articles = positiveArticles + negativeArticles
+
+    for article in articles:
+        # run count vectorization on text
+        vectorizer = CountVectorizer()
+        vectorizer.fit(article.getText())
+        vector = vectorizer.transform(article.getText())
+
+    # visualize data
+    '''norm = np.linalg.norm(dataset)
+    normData = dataset/norm
+    x = np.array(normData)
+    plt.scatter(x[:,0], x[:,1], label='True Position')
+    plt.show()'''
+
 
 def trainModel():
     '''
@@ -24,9 +56,6 @@ def trainModel():
         dataset, classification = scrapeData()
     else:
         dataset, classification = readLists()
-
-    print('dataset is: ', dataset)
-    print('classification is: ', classification)
 
     gnb = GaussianNB()
 
@@ -61,8 +90,6 @@ def filterArticles(urls, model):
 
         blob0 = TextBlob(title)
         blob1 = TextBlob(text)
-        # print('title sentiment: ', blob0.sentiment.polarity)
-        # print('text sentiment: ', blob1.sentiment.polarity)
 
         currPair = [blob0.sentiment.polarity, blob1.sentiment.polarity]
 

@@ -4,7 +4,7 @@ Date: 04/02/2020
 
 Beacon - COVID-19 optimism bot
 """
-from ml import trainModel, filterArticles
+from ml import trainModel, filterArticles, testmodel
 from web import getArticleURLS
 from util import craftMsg
 from util import sendEmails
@@ -14,12 +14,18 @@ import auth
 import time
 
 if __name__ == '__main__':
+    '''
     model, x_test, y_test = trainModel()
+    testmodel(model, x_test, y_test)
+    '''
+    
+    '''
     urls = getArticleURLS('optimistic news about coronavirus', 1)
     positiveArticles = filterArticles(urls, model)
     msg = craftMsg(positiveArticles)
     sendEmails(auth.mailingList, msg)
-'''
+    '''
+
     lastRecovered = checkRecoveries(0)
 
     model, x_test, y_test = trainModel()
@@ -27,6 +33,7 @@ if __name__ == '__main__':
     WAIT_TIME = 86400       # 24 hours
     while True:
         recoveredDifference = checkRecoveries(lastRecovered)
+        print('recovered difference', recoveredDifference)
 
         if recoveredDifference >= 10000:
             lastRecovered = checkRecoveries(0)
@@ -38,4 +45,3 @@ if __name__ == '__main__':
             sendEmails(auth.mailingList, msg)
         
         time.sleep(WAIT_TIME)
-'''

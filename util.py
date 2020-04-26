@@ -4,30 +4,13 @@ Date: 04/20/2020
 
 Mostly logic based utility functions
 """
+from classes.Article import Article
 
 import smtplib, ssl             # for sending emails
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from textblob import TextBlob   # for sentiment analysis
 import auth
-
-def getArticles(urls):
-    '''
-    Iterates over all of the articles and parses them
-
-    Saves the text of each article in a list of articles
-
-    Keyword Arguments:
-    urls -- The list of URLs pointing to articles
-
-    return -- List of text from each article
-    '''
-    articles = []
-    for url in urls:
-        articles.append(getArticleInfo(url))
-
-    return articles
-
 
 def extractNumbers(articleList, classificationList, c):
     '''
@@ -91,7 +74,6 @@ def readData(filename):
 
                 listElement.append(float(token))
 
-            print('this should be a 2 value list: ', listElement)
             dataList.append(listElement)
         
         else:
@@ -134,7 +116,8 @@ def craftMsg(urls):
                 </br>
                 <p>If you're getting this message, it means that 10,000 more people recovered
                 from COVID-19! That's 10,000 more lives saved. Here's some optimistic news about
-                the pandemic to brighten your day:</p>
+                the pandemic to brighten your day (I'm just a robot, please bear with me if some of
+                these articles are not what you expect!):</p>
                 </br>
                 </br>
     '''

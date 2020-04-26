@@ -6,6 +6,7 @@ Web scraping and other web related functions
 """
 
 from classes.Article import Article
+from util import extractNumbers
 
 from datetime import date
 import time
@@ -47,18 +48,20 @@ def getArticleURLS(query, numPages):
     que.send_keys(Keys.RETURN)
 
     # Wait for browser to get to new page before finding links
-    time.sleep(1)
+    time.sleep(2)
 
-    nextXpath = '/html/body/div[6]/div[2]/div[9]/div[1]/div[2]\
-        /div/div[5]/div[2]/span[1]/div/table/tbody/tr/td[12]/a/span[2]'
+    nextXpath = '/html/body/div[6]/div[3]/div[8]/div[1]/div[2]/div/div[5]/div[2]/span[1]/div/table/tbody/tr/td[12]/a/span[2]'
 
     hrefs = []
     for i in range(0,numPages):
         # time.sleep(1)
         currURLs = getPageURLS(driver)
         hrefs = hrefs + currURLs
-        nextBtn = driver.find_element_by_xpath(nextXpath)
-        nextBtn.click()
+        try:
+            nextBtn = driver.find_element_by_xpath(nextXpath)   # if there's no next page, break
+            nextBtn.click()
+        except:
+            break
 
         if numPages == 1:
             break
@@ -99,6 +102,28 @@ def getArticleInfo(url):
         return None         # FIXME: if this is an issue, just return Article('neutral', 'neutral')
 
 
+def getArticles(urls):
+    '''
+    Iterates over all of the articles and parses them
+
+    Saves the text of each article in a list of articles
+
+    Keyword Arguments:
+    urls -- The list of URLs pointing to articles
+
+    return -- List of text from each article
+    '''
+    i = 0
+    numArticles = len(urls)
+    articles = []
+    for url in urls:
+        print('Getting article ', i, ' out of ', numArticles, '(', i/numArticles, ')')
+        articles.append(getArticleInfo(url))
+        i = i + 1
+
+    return articles
+
+
 def scrapeData():
     '''
     Collects and aggregates data for train/test purposes
@@ -106,8 +131,8 @@ def scrapeData():
     return -- the aggregate feature dataset and accompanying classifications
     '''
     print('GETTING DATA...')
-    positiveURLs = getArticleURLS('optimistc news about coronavirus', 5)
-    negativeURLs = getArticleURLS('coronavirus news getting worse', 5)
+    positiveURLs = getArticleURLS('optimistc news about coronavirus', 100)
+    negativeURLs = getArticleURLS('coronavirus news getting worse', 100)
 
     positiveArticles = getArticles(positiveURLs)
     negativeArticles = getArticles(negativeURLs)
@@ -176,6 +201,6 @@ def checkRecoveries(prevNum):
         if row[9].isdigit():
             totalRecovered = totalRecovered + int(row[9])
 
-    print(totalRecovered)
+    print('Total recovered is: ', totalRecovered)
 
     return totalRecovered - prevNum
