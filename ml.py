@@ -59,7 +59,7 @@ def trainModel():
 
     gnb = GaussianNB()
 
-    print('TRAINING MODEL...')
+    # print('TRAINING MODEL...')
 
     # Split the training and testing data
     x_train, x_test, y_train, y_test = \
@@ -67,8 +67,8 @@ def trainModel():
 
     model = gnb.fit(x_train, y_train)
 
-    print('MODEL TRAINED.')
-    return model, x_test, y_test
+    # print('MODEL TRAINED.')
+    return model, dataset, classification
 
 
 def filterArticles(urls, model):
