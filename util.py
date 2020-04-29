@@ -11,6 +11,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from textblob import TextBlob   # for sentiment analysis
 import auth
+from datetime import date, datetime
 
 def extractNumbers(articleList, classificationList, c):
     '''
@@ -147,3 +148,26 @@ def sendEmails(mailingList, msg):               # FIXME: craft message with link
         message['Subject'] = '10,000 More Recover from COVID-19'
         message.attach(payload)
         server.sendmail(senderEmail, subscriber, message.as_string())
+
+
+def logOutput(emailSent, recovDiff):
+    '''
+    Logs the performance of the script to log.txt
+
+    Keyword Arguments:
+    emailSent -- bool if emails should have been sent
+
+    recovDiff -- the delta of # people recovered from CV-19
+    '''
+    today = date.today()    # FIXME: add time here!!!!
+    formattedDate = '{:02d}'.format(today.month) + '-' + \
+        '{:02d}'.format(today.day) + '-' + str(today.year)
+
+
+    fp = open('log.txt', 'a')
+    fp.write(str(datetime.now()) + '\n')
+    fp.write('Recovered difference: ' + str(recovDiff) + '\n')
+    fp.write('Email sent: ' + str(emailSent) + '\n')
+    fp.write('--------------------------------------------------------------------------------\n\n')
+
+    fp.close()
