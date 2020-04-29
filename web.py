@@ -201,6 +201,8 @@ def checkRecoveries(prevNum):
         if row[9].isdigit():
             totalRecovered = totalRecovered + int(row[9])
 
-    print('Total recovered is: ', totalRecovered)
+    fp = open('log.txt', 'a')
+    fp.write('Total recovered is: ' + str(totalRecovered) + '\n')
+    fp.close()
 
     return totalRecovered - prevNum
