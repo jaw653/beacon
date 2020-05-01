@@ -203,6 +203,7 @@ def checkRecoveries(prevNum):
 
     fp = open('log.txt', 'a')
     fp.write('Total recovered is: ' + str(totalRecovered) + '\n')
+    fp.write('Prev num is: ' + str(prevNum) + '\n')
     fp.close()
 
     return totalRecovered - prevNum
