@@ -140,14 +140,16 @@ def sendEmails(mailingList, msg):               # FIXME: craft message with link
     server.login(senderEmail, auth.password)
 
     payload = MIMEText(msg, 'html')
+    message = MIMEMultipart()
+    message['From'] = senderEmail
+    message['To'] = subscriber
+    message['Subject'] = '10,000 More Recover from COVID-19'
+    message.attach(payload)
 
-    for subscriber in mailingList:
-        message = MIMEMultipart()
-        message['From'] = senderEmail
-        message['To'] = subscriber
-        message['Subject'] = '10,000 More Recover from COVID-19'
-        message.attach(payload)
-        server.sendmail(senderEmail, subscriber, message.as_string())
+    msgString = message.as_string()
+
+    for subscriber in mailingList:          # FIXME: just craft one email, not one per subscriber
+        server.sendmail(senderEmail, subscriber, msgString)
 
 
 def logOutput(emailSent, recovDiff):
@@ -159,7 +161,7 @@ def logOutput(emailSent, recovDiff):
 
     recovDiff -- the delta of # people recovered from CV-19
     '''
-    today = date.today()    # FIXME: add time here!!!!
+    today = date.today()
     formattedDate = '{:02d}'.format(today.month) + '-' + \
         '{:02d}'.format(today.day) + '-' + str(today.year)
 
