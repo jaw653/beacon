@@ -6,7 +6,7 @@ The Article class
 '''
 
 class Article:
-    def __init__(self, title, text):
+    def __init__(self, title, text, img):
         '''
         Default constructor
 
@@ -16,6 +16,7 @@ class Article:
         '''
         self.title = title
         self.text = text
+        self.img = img
 
     
     def setTitle(self, t):
@@ -54,3 +55,22 @@ class Article:
         return -- the text of the article
         '''
         return self.text
+
+    
+    def setImg(self, img):
+        '''
+        Setter for the img attribute
+
+        Keyword Arguments:
+        img -- article's top image
+        '''
+        self.img = img
+
+
+    def getImg(self):
+        '''
+        Getter for the img attribute
+
+        return -- top image of the article
+        '''
+        return self.img
