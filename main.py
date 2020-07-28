@@ -28,26 +28,30 @@ if __name__ == '__main__':
     sendEmails(auth.mailingList, msg)
     '''
     
-    lastRecovered = checkRecoveries(0)
+    lastRecovered = checkRecoveries()
 
     model, x_test, y_test = trainModel()
 
     WAIT_TIME = 86400       # 24 hours
     # WAIT_TIME = 600       # 10 minutes
     while True:
-        recoveredDifference = checkRecoveries(lastRecovered)
+        currRecovered = checkRecoveries()
+        recoveredDifference = currRecovered - lastRecovered
         # print('recovered difference', recoveredDifference)
 
         emailSent = False
         if recoveredDifference >= 10000:
-            emailSent = True                        # FIXME: move this to try/catch block so it will only be true if email actually sent
-            lastRecovered = checkRecoveries(0)
+            lastRecovered = currRecovered
     
             urls = getArticleURLS('optimistic news about coronavirus', 1)
             positiveArticles = filterArticles(urls, model)
 
             msg = craftMsg(positiveArticles)
-            sendEmails(auth.mailingList, msg)
+            try:
+                sendEmails(auth.mailingList, msg)
+                emailSent = True
+            except:
+                emailSent = False
 
         logOutput(emailSent, recoveredDifference)
         
