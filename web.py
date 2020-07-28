@@ -183,18 +183,13 @@ def getReport():
     return res
 
 
-def checkRecoveries(prevNum):
+def checkRecoveries():
     '''
     Checks the JHU CV dashboard for number recovered
 
-    Keyword Arguments:
-    prevNum -- the previous number recovered
-
-    return -- the difference between last time and this time of num recovered
+    return -- the total number of people currently recovered from COVID-19
     '''
     rawReport = getReport().text
-
-    # print(rawReport)
 
     lines = rawReport.splitlines()
     data = csv.reader(lines)
@@ -204,9 +199,4 @@ def checkRecoveries(prevNum):
         if row[9].isdigit():
             totalRecovered = totalRecovered + int(row[9])
 
-    fp = open('log.txt', 'a')
-    fp.write('Total recovered is: ' + str(totalRecovered) + '\n')
-    fp.write('Prev num is: ' + str(prevNum) + '\n')
-    fp.close()
-
-    return totalRecovered - prevNum
+    return totalRecovered
