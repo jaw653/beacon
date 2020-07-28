@@ -33,13 +33,14 @@ if __name__ == '__main__':
     model, x_test, y_test = trainModel()
 
     WAIT_TIME = 86400       # 24 hours
+    # WAIT_TIME = 600       # 10 minutes
     while True:
         recoveredDifference = checkRecoveries(lastRecovered)
         # print('recovered difference', recoveredDifference)
 
         emailSent = False
         if recoveredDifference >= 10000:
-            emailSent = True
+            emailSent = True                        # FIXME: move this to try/catch block so it will only be true if email actually sent
             lastRecovered = checkRecoveries(0)
     
             urls = getArticleURLS('optimistic news about coronavirus', 1)

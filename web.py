@@ -13,6 +13,7 @@ import time
 import csv
 from selenium import webdriver  # FIXME: does Google have an API I can use instead of Selenium
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.options import Options
 import newspaper
 import requests
 
@@ -40,7 +41,9 @@ def getArticleURLS(query, numPages):
 
     return -- list of URLs of articles
     '''
-    driver = webdriver.Firefox()
+    options = Options()
+    options.add_argument("--headless")
+    driver = webdriver.Firefox(options=options)
     driver.get('https://www.google.com')
 
     que = driver.find_element_by_xpath("//input[@name='q']")
@@ -73,7 +76,7 @@ def getArticleURLS(query, numPages):
 
 def getArticleInfo(url):
     '''
-    Gets the text of a given article
+    Gets the text, title & image of a given article
     
     Keyword Arguments:
     url -- The URL for the article to parse
@@ -93,7 +96,7 @@ def getArticleInfo(url):
             article.parse()
             print('PARSED ARTICLE: ', article.title)
 
-            return Article(article.title, article.text)
+            return Article(article.title, article.text, article.top_image)
         except:
             return None
 

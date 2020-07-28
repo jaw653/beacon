@@ -51,7 +51,7 @@ def extractNumbers(articleList, classificationList, c):
 
 def readData(filename):
     '''
-    Reads polarity data from a file instead of scraping the web
+    Reads polarity data from a file instead of scraping the web (more efficient)
 
     Keyword Arguments:
     filename -- Name of the file to be read from
@@ -131,7 +131,15 @@ def craftMsg(urls):
     return msg
 
 
-def sendEmails(mailingList, msg):               # FIXME: craft message with links and pass in here
+def sendEmails(mailingList, msg):
+    '''
+    Sends email to list of subscribers
+
+    Keyword Arguments:
+    mailingList -- list of emails to send msg to
+
+    msg -- the message to send in the emails
+    '''
     sslContext = ssl.create_default_context()
 
     senderEmail = 'beaconapp.hope@gmail.com'
