@@ -1,5 +1,5 @@
 """
-Author: Jake Wachs
+Author: Jake
 Date: 04/20/2020
 
 Mostly logic based utility functions
