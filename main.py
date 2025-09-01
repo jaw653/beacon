@@ -1,5 +1,5 @@
 """
-Author: Jake Wachs
+Author: Jake
 Date: 04/02/2020
 
 Beacon - COVID-19 optimism bot
